@@ -85,8 +85,12 @@ export default function Home() {
       textAlign: 'center'
     }}>
       <header>
-        {/* Ganti '/logo.png' dengan URL atau path logo yang Anda inginkan */}
-        <img src="/logo.png" alt="SOCIAL DRAW Logo" style={{ width: '100px' }} />
+        {/* Ganti URL di bawah dengan direct link dari logo yang Anda inginkan */}
+        <img 
+          src="https://i.imgur.com/BQ7W9Ev.png" 
+          alt="SOCIAL DRAW Logo" 
+          style={{ width: '150px', height: 'auto', marginBottom: '1rem' }} 
+        />
         <h1>SOCIAL DRAW</h1>
       </header>
       <main>
