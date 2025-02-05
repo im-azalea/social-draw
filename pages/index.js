@@ -1,12 +1,11 @@
 // pages/index.js
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
-import WalletConnectProvider from "@walletconnect/web3-provider";
+import EthereumProvider from '@walletconnect/ethereum-provider';
 
-// Data kontrak (sesuai kebutuhan)
 const CONTRACT_ADDRESS = "0x2ED49c7CfD45018a80651C0D5637a5D42a6948cb";
 const OWNER_WALLET = "0x702C14376cC18CaC83A0589440455a88Dce46f3f";
-// ABI minimal sebagai contoh (jika diperlukan)
+// ABI minimal sebagai contoh
 const tokenABI = [
   "function balanceOf(address) view returns (uint256)",
   "function transfer(address to, uint amount) returns (bool)"
@@ -16,29 +15,35 @@ export default function Home() {
   const [account, setAccount] = useState("");
   const [message, setMessage] = useState("");
 
-  // Cek apakah ada injected provider (misalnya, dari Coinbase Wallet in-app browser)
   useEffect(() => {
+    // Jika tidak ada injected provider, beritahu pengguna
     if (typeof window.ethereum === 'undefined') {
-      setMessage("No injected wallet found. You can use Coinbase Wallet app or WalletConnect.");
+      setMessage("No injected wallet found. You can use the Coinbase Wallet app or connect via WalletConnect.");
     }
   }, []);
 
-  // Fungsi untuk menghubungkan wallet
+  // Fungsi untuk menghubungkan wallet menggunakan injected provider atau WalletConnect v2
   const connectWallet = async () => {
     try {
       let provider;
-      // Jika ada window.ethereum (misal, dibuka lewat in-app browser Coinbase Wallet)
+      // Jika window.ethereum tersedia (misal, dari in-app browser Coinbase Wallet)
       if (typeof window.ethereum !== "undefined") {
         provider = new ethers.providers.Web3Provider(window.ethereum);
         await window.ethereum.request({ method: "eth_requestAccounts" });
       } else {
-        // Jika tidak ada, gunakan WalletConnect
-        const walletConnectProvider = new WalletConnectProvider({
-          rpc: {
-            // Ganti dengan URL RPC yang valid; contoh: menggunakan Infura untuk Mainnet
-            1: "https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID"
-          },
-          qrcode: true,
+        // Jika tidak, gunakan WalletConnect v2
+        // Pastikan Anda sudah mendapatkan projectId dari WalletConnect (https://cloud.walletconnect.com)
+        const walletConnectProvider = await EthereumProvider.init({
+          projectId: "YOUR_WALLETCONNECT_PROJECT_ID", // Ganti dengan projectId Anda
+          chains: [1], // Ganti dengan ID chain yang Anda gunakan, misal 1 untuk Ethereum Mainnet
+          optionalMethods: [
+            "eth_sendTransaction",
+            "eth_signTransaction",
+            "eth_sign",
+            "personal_sign",
+            "eth_signTypedData"
+          ],
+          showQrModal: true
         });
         await walletConnectProvider.enable();
         provider = new ethers.providers.Web3Provider(walletConnectProvider);
@@ -56,7 +61,7 @@ export default function Home() {
     }
   };
 
-  // Fungsi untuk Join Lottery, memanggil API Route
+  // Fungsi untuk join lottery, memanggil API Route /api/joinLottery
   const joinLottery = async () => {
     if (!account) {
       setMessage("Please connect your wallet first.");
@@ -80,7 +85,7 @@ export default function Home() {
     }
   };
 
-  // Fungsi untuk Draw Winner, memanggil API Route
+  // Fungsi untuk draw winner, memanggil API Route /api/drawWinner
   const drawWinner = async () => {
     try {
       const response = await fetch('/api/drawWinner', {
