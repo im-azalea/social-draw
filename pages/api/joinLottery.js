@@ -1,7 +1,6 @@
 // pages/api/joinLottery.js
 import { Octokit } from "@octokit/rest";
 
-// Inisialisasi Octokit dengan token GitHub dari environment variable
 const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
 
 export default async function handler(req, res) {
@@ -16,13 +15,11 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Parameter repository target
-  const owner = process.env.REPO_OWNER; // misal: username GitHub Anda
-  const repo = process.env.REPO_NAME;   // misal: social-draw
+  const owner = process.env.REPO_OWNER;
+  const repo = process.env.REPO_NAME;
   const path = "participants.json";
 
   try {
-    // Ambil file participants.json jika sudah ada
     let sha;
     let contentArray = [];
     try {
@@ -35,11 +32,9 @@ export default async function handler(req, res) {
       const decodedContent = Buffer.from(data.content, 'base64').toString('utf8');
       contentArray = JSON.parse(decodedContent);
     } catch (error) {
-      // Jika file belum ada, mulai dengan array kosong
       contentArray = [];
     }
 
-    // Tambahkan alamat peserta jika belum ada
     if (!contentArray.includes(address)) {
       contentArray.push(address);
     }
@@ -47,7 +42,6 @@ export default async function handler(req, res) {
     const updatedContent = Buffer.from(JSON.stringify(contentArray, null, 2)).toString('base64');
     const commitMessage = `Add participant ${address}`;
 
-    // Buat atau update file di GitHub
     await octokit.repos.createOrUpdateFileContents({
       owner,
       repo,
