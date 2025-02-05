@@ -12,19 +12,12 @@ const tokenABI = [
 
 export default function Home() {
   const [account, setAccount] = useState("");
-  const [participants, setParticipants] = useState([]);
-  const [winner, setWinner] = useState(null);
-  const [provider, setProvider] = useState(null);
-  const [contract, setContract] = useState(null);
   const [message, setMessage] = useState("");
-
+  
+  // Fungsi untuk menginisiasi provider dan kontrak tidak digunakan secara langsung di halaman ini
+  // Karena interaksi token akan dilakukan di API atau sesuai kebutuhan.
   useEffect(() => {
-    if (typeof window.ethereum !== 'undefined') {
-      const prov = new ethers.providers.Web3Provider(window.ethereum);
-      setProvider(prov);
-      const cont = new ethers.Contract(CONTRACT_ADDRESS, tokenABI, prov.getSigner());
-      setContract(cont);
-    } else {
+    if (typeof window.ethereum === 'undefined') {
       setMessage("Please install MetaMask.");
     }
   }, []);
@@ -40,22 +33,26 @@ export default function Home() {
     }
   };
 
-  // Fungsi simulasi join lottery
+  // Fungsi joinLottery yang memanggil API untuk menyimpan data peserta ke GitHub
   const joinLottery = async () => {
-    if (!contract) {
-      setMessage("Contract not loaded");
-      return;
-    }
     if (!account) {
       setMessage("Please connect your wallet first.");
       return;
     }
     try {
-      // Untuk demo: menambahkan alamat wallet ke array peserta.
-      // Di implementasi nyata, Anda akan memanggil fungsi transfer atau
-      // melakukan validasi transaksi token sebesar 500 $SOCIAL.
-      setParticipants([...participants, account]);
-      setMessage("You have joined the lottery!");
+      const response = await fetch('/api/joinLottery', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ address: account })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setMessage(data.message);
+      } else {
+        setMessage(data.message || "Error joining lottery.");
+      }
     } catch (error) {
       console.error(error);
       setMessage("Error joining lottery.");
@@ -63,17 +60,8 @@ export default function Home() {
   };
 
   const drawWinner = () => {
-    if (participants.length === 0) {
-      setMessage("No participants to draw from.");
-      return;
-    }
-    // Pemilihan pemenang secara random
-    const randomIndex = Math.floor(Math.random() * participants.length);
-    const selectedWinner = participants[randomIndex];
-    setWinner(selectedWinner);
-    setMessage("Winner drawn: " + selectedWinner);
-    // Di implementasi nyata, setelah pemenang dipilih, distribusi token harus dilakukan:
-    // 95% ke pemenang dan 5% tersisa di OWNER_WALLET.
+    // Fitur drawWinner pada halaman utama masih berupa simulasi.
+    setMessage("Feature not implemented on client side. Use backend or smart contract for secure drawing.");
   };
 
   return (
@@ -85,12 +73,6 @@ export default function Home() {
       textAlign: 'center'
     }}>
       <header>
-        {/* Ganti URL di bawah dengan direct link dari logo yang Anda inginkan */}
-        <img 
-          src="https://i.imgur.com/BQ7W9Ev.png" 
-          alt="SOCIAL DRAW Logo" 
-          style={{ width: '150px', height: 'auto', marginBottom: '1rem' }} 
-        />
         <h1>SOCIAL DRAW</h1>
       </header>
       <main>
@@ -105,7 +87,6 @@ export default function Home() {
         <div style={{ margin: '2rem' }}>
           <button onClick={drawWinner}>Draw Winner</button>
         </div>
-        {winner && <h2>Winner: {winner}</h2>}
         <p>{message}</p>
       </main>
     </div>
